@@ -11,6 +11,12 @@ st.set_page_config(
     layout="wide", 
     initial_sidebar_state="collapsed"
 )
+hide_footer_style = """
+<style>
+.reportview-container .main footer {visibility: hidden;}    
+"""
+st.markdown(hide_footer_style, unsafe_allow_html=True)
+
 if st.session_state.get('guest') is None:
     st.session_state.guest = {
         'name' : [],
