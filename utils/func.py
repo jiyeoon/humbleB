@@ -39,12 +39,12 @@ def create_tennis_schedule(attendee, NUM_TIMESLOTS=6, NUM_COURT=2, PLAYERS_PER_C
     for i in range(len(attendee)):
         name, gender, years, ntrp, start_time, end_time = attendee[i]
         members.append({
-            "name" : name,
-            "gender" : gender,
-            "years" : years,
-            "ntrp" : ntrp,
-            "start_time" : start_time,
-            "end_time" : end_time,
+            "name" : str(name),
+            "gender" : str(gender),
+            "years" : int(years),
+            "ntrp" : float(ntrp),
+            "start_time" : int(start_time),
+            "end_time" : int(end_time),
             "available_times" : [i for i in range(start_time, end_time+1)]
         })
     
