@@ -1,6 +1,8 @@
 import os, sys, json
 import sqlite3
+import random
 
+from collections import defaultdict
 import streamlit as st
 
 def get_member(file_path='./asset/members'):
@@ -25,6 +27,86 @@ def get_member(file_path='./asset/members'):
 # TODO
 def set_member(data, file_path='./asset/members'):
     return 
+
+
+def create_tennis_schedule(attendee, NUM_TIMESLOTS=6, NUM_COURT=2, PLAYERS_PER_COURT=4):
+    schedule = {str(i+1) : [[], []] for i in range(NUM_TIMESLOTS)}
+    games_per_member = defaultdict(int)
+    used_combinations = defaultdict(set)
+    game_type_count = defaultdict(int)
+
+    members = []
+    for i in range(len(attendee)):
+        name, gender, years, ntrp, start_time, end_time = attendee[i]
+        members.append({
+            "name" : name,
+            "gender" : gender,
+            "years" : years,
+            "ntrp" : ntrp,
+            "start_time" : start_time,
+            "end_time" : end_time,
+            "available_times" : [i for i in range(start_time, end_time+1)]
+        })
+    
+    for timeslot in range(1, NUM_TIMESLOTS+1):
+        available_members = [m for m in members if timeslot in m['available_times']]
+
+        for court in range(NUM_COURT):
+            
+            available_members_sorted = sorted(available_members, key=lambda x : [games_per_member[x['name']], x['gender'], len(x['available_times']), x['years'], x['ntrp']])
+            
+            court_players = available_members_sorted[:2]
+            genders = [p['gender'] for p in court_players]
+
+            if genders.count("남") == 2:
+                if game_type_count['남복'] <= game_type_count['여복'] and game_type_count['남복'] <= game_type_count['혼복']:
+                    court_players += [p for p in available_members_sorted[2:] if p['gender'] == '남'][:2]
+                    game_type = "남복"
+                else:
+                    court_players += [p for p in available_members_sorted[2:] if p['gender'] == '여'][:2]
+                    game_type = "혼복"
+            elif genders.count("여") == 2:
+                if game_type_count["여복"] <= game_type_count["남복"] and game_type_count["여복"] <= game_type_count["혼복"]:
+                    court_players += [p for p in available_members_sorted[2:] if p['gender'] == '여'][:2]
+                    game_type = "여복"
+                else:
+                    court_players += [p for p in available_members_sorted[2:] if p['gender'] == '남'][:2]
+                    game_type = "혼복"
+            else:
+                court_players += [p for p in available_members_sorted[2:] if p['gender'] == '남'][:1]
+                court_players += [p for p in available_members_sorted[2:] if p['gender'] == '여'][:1]
+                game_type = "혼복"
+            
+            if len(court_players) < PLAYERS_PER_COURT:
+                court_players = available_members_sorted[:PLAYERS_PER_COURT]
+                game_type = "기타"
+
+            # 멤버들의 조합을 튜플로 만들어서 중복 체크
+            court_combination = tuple(sorted([court_players[i]["name"] for i in range(len(court_players))]))
+
+            # 중복 최소화를 위한 전략
+            if all(mem_id not in used_combinations[court_players[i]["name"]] for i, mem_id in enumerate(court_combination)):
+                for player in court_players:
+                    used_combinations[player["name"]].update(court_combination)
+
+            # 대진표에 추가
+            game_type_count[game_type] += 1
+            court_schedule = [[court_players[i]["name"] for i in range(len(court_players))], game_type]
+            schedule[str(timeslot)][court] = court_schedule
+
+            # 참여 멤버 기록 업데이트
+            for player in court_players:
+                games_per_member[player["name"]] += 1
+            
+            for p in court_players:
+                available_members.remove(p)
+
+
+    return schedule, games_per_member
+            
+
+
+
 
 @st.dialog("게스트 정보 입력")
 def guest_info():

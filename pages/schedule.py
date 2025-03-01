@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 from utils.ui import set_sidebar
-from utils.func import get_member, guest_info
+from utils.func import get_member, guest_info, create_tennis_schedule
 
 # --- Streamlit Config  
 st.set_page_config(
@@ -11,11 +11,14 @@ st.set_page_config(
     layout="wide", 
     initial_sidebar_state="collapsed"
 )
-hide_footer_style = """
-<style>
-.reportview-container .main footer {visibility: hidden;}    
+hide_st_style = """
+    <style>
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    </style>
 """
-st.markdown(hide_footer_style, unsafe_allow_html=True)
+st.markdown(hide_st_style, unsafe_allow_html=True)
 
 if st.session_state.get('guest') is None:
     st.session_state.guest = {
@@ -58,5 +61,52 @@ attendee_df['start_time'] = 1
 attendee_df['end_time'] = 6
 st.data_editor(attendee_df, hide_index=True, use_container_width=True)
 
+
 if st.button("Generate Schedule"):
+    attendee = attendee_df.values.tolist()
+    schedule, games_per_member = create_tennis_schedule(attendee)
+
     st.write("Schedule Generated!")
+
+    result = {
+        '코트1' : [],
+        '코트1 분류' : [],
+        '코트2' : [],
+        '코트2 분류' : [],
+    }
+
+    for timeslot, courts in schedule.items():
+        for court_idx, court_players in enumerate(courts, 1):
+            result[f'코트{court_idx}'].append(court_players[0])
+            result[f'코트{court_idx} 분류'].append(court_players[1])
+
+    df = pd.DataFrame(result)
+
+    def highlight_cells(row):
+        styles = ['' for _ in row]
+
+        if row['코트1 분류'] == '남복':
+            styles[0] = 'background-color: lightblue'
+            styles[1] = 'background-color: lightblue'
+        elif row['코트1 분류'] == '여복':
+            styles[0] = 'background-color: lightpink'
+            styles[1] = 'background-color: lightpink'
+        elif row['코트1 분류'] == '혼복':
+            styles[0] = 'background-color: lightyellow'
+            styles[1] = 'background-color: lightyellow'
+        
+        if row['코트2 분류'] == '남복':
+            styles[2] = 'background-color: lightblue'
+            styles[3] = 'background-color: lightblue'
+        elif row['코트2 분류'] == '여복':
+            styles[2] = 'background-color: lightpink'
+            styles[3] = 'background-color: lightpink'
+        elif row['코트2 분류'] == '혼복':
+            styles[2] = 'background-color: lightyellow'
+            styles[3] = 'background-color: lightyellow'
+        
+        return styles
+    
+    st.data_editor(df.style.apply(highlight_cells, axis=1))
+
+
