@@ -57,15 +57,14 @@ st.session_state.total_cnt = len(st.session_state.attendee_df)
 st.session_state.male_cnt = len(st.session_state.attendee_df[st.session_state.attendee_df['gender']=='남'])
 st.session_state.female_cnt = len(st.session_state.attendee_df[st.session_state.attendee_df['gender']=='여'])
 st.write("총 {}명 / 최대 12명 (남 : {}명 / 여 : {}명)".format(st.session_state.total_cnt, st.session_state.male_cnt, st.session_state.female_cnt))
-st.data_editor(st.session_state.attendee_df, hide_index=True, use_container_width=True, on_change='rerun')
+attendee_edited = st.data_editor(st.session_state.attendee_df, hide_index=True, use_container_width=True)
 
 
 if st.button("Generate Schedule"):
-    attendee = st.session_state.attendee_df.values.tolist()
+    attendee = attendee_edited.values.tolist()
     schedule, games_per_member = create_tennis_schedule(attendee)
-
-    st.write("Schedule Generated!")
     
+    st.write("##### Schedule")
     result = {
         'set' : [],
         '코트1' : [],
@@ -76,13 +75,31 @@ if st.button("Generate Schedule"):
 
     for timeslot, courts in schedule.items():
         result['set'].append(f'{timeslot} set')
-        for court_idx, court_players in enumerate(courts, 1):
-            result[f'코트{court_idx}'].append(court_players[0])
-            result[f'코트{court_idx} 분류'].append(court_players[1])
+        for court_idx, court_info in enumerate(courts, 1):
+            if not court_info:
+                result[f'코트{court_idx}'].append('')
+                result[f'코트{court_idx} 분류'].append('')
+                continue
 
+            court_players, game_type = court_info
+            if len(court_players) == 4:
+                players = "{}, {} / {}, {}".format(court_players[0], court_players[1], court_players[2], court_players[3])
+            else:
+                players = ", ".join(court_players)
+            result[f'코트{court_idx}'].append(players)
+            result[f'코트{court_idx} 분류'].append(game_type)
     df = pd.DataFrame(result)
-    
-    st.data_editor(df.style.apply(highlight_cells, axis=1), hide_index=True)
+    df.index = df.index + 1
+    st.dataframe(df.style.apply(highlight_cells, axis=1), hide_index=True, use_container_width=True)
 
-    st.dataframe(games_per_member)
+    st.write("##### Games per Member")
+    cnt_df = []
+    for key, value in games_per_member.items():
+        tmp = {k: v for k, v in value.items()}
+        tmp['name'] = key
+        cnt_df.append(tmp)
+    cnt_df = pd.DataFrame(cnt_df, columns=['name', 'total', '남복', '여복', '혼복', '기타'])
+    cnt_df.fillna(0, inplace=True)
+    st.dataframe(cnt_df, hide_index=True)
+    # st.dataframe(games_per_member)
 

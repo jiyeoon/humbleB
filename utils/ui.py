@@ -22,30 +22,30 @@ def set_sidebar():
 def highlight_cells(row):
     styles = ['' for _ in row]
 
-    if row['코트1 분류'].strip() == '남복':
-        styles[0] = 'background-color: lightblue'
+    if row['코트1 분류'] == '남복':
         styles[1] = 'background-color: lightblue'
+        styles[2] = 'background-color: lightblue'
     elif row['코트1 분류'] == '여복':
-        styles[0] = 'background-color: lightpink'
         styles[1] = 'background-color: lightpink'
+        styles[2] = 'background-color: lightpink'
     elif row['코트1 분류'] == '혼복':
-        styles[0] = 'background-color: lightyellow'
         styles[1] = 'background-color: lightyellow'
+        styles[2] = 'background-color: lightyellow'
     else:
-        styles[0] = 'background-color: lightgrey'
         styles[1] = 'background-color: lightgrey'
+        styles[2] = 'background-color: lightgrey'
     
     if row['코트2 분류'] == '남복':
-        styles[2] = 'background-color: lightblue'
         styles[3] = 'background-color: lightblue'
+        styles[4] = 'background-color: lightblue'
     elif row['코트2 분류'] == '여복':
-        styles[2] = 'background-color: lightpink'
         styles[3] = 'background-color: lightpink'
+        styles[4] = 'background-color: lightpink'
     elif row['코트2 분류'] == '혼복':
-        styles[2] = 'background-color: lightyellow'
         styles[3] = 'background-color: lightyellow'
+        styles[4] = 'background-color: lightyellow'
     else:
-        styles[2] = 'background-color: lightgrey'
         styles[3] = 'background-color: lightgrey'
+        styles[4] = 'background-color: lightgrey'
     
     return styles
