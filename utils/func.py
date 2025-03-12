@@ -30,82 +30,6 @@ def set_member(data, file_path='./asset/members'):
     return
 
 
-# def create_tennis_schedule(attendee, NUM_TIMESLOTS=6, NUM_COURT=2, PLAYERS_PER_COURT=4):
-#     schedule = {str(i+1) : [[], []] for i in range(NUM_TIMESLOTS)}
-#     games_per_member = defaultdict(int)
-#     used_combinations = defaultdict(set)
-#     game_type_count = defaultdict(int)
-
-#     members = []
-#     for i in range(len(attendee)):
-#         name, gender, years, ntrp, start_time, end_time = attendee[i]
-#         members.append({
-#             "name" : str(name),
-#             "gender" : str(gender),
-#             "years" : int(years),
-#             "ntrp" : float(ntrp),
-#             "start_time" : int(start_time),
-#             "end_time" : int(end_time),
-#             "available_times" : [i for i in range(start_time, end_time+1)]
-#         })
-    
-#     for timeslot in range(1, NUM_TIMESLOTS+1):
-#         available_members = [m for m in members if timeslot in m['available_times']]
-
-#         for court in range(NUM_COURT):
-            
-#             available_members_sorted = sorted(available_members, key=lambda x : [games_per_member[x['name']], x['gender'], len(x['available_times']), -x['years'], -x['ntrp']])
-
-
-#             court_players = available_members_sorted[:2]
-#             genders = [p['gender'] for p in court_players]
-
-#             if genders.count("남") == 2:
-#                 if game_type_count['남복'] <= game_type_count['여복'] or game_type_count['남복'] <= game_type_count['혼복']:
-#                     court_players += [p for p in available_members_sorted[2:] if p['gender'] == '남'][:2]
-#                     game_type = "남복"
-#                 else:
-#                     court_players += [p for p in available_members_sorted[2:] if p['gender'] == '여'][:2]
-#                     game_type = "혼복"
-#             elif genders.count("여") == 2:
-#                 if game_type_count["여복"] <= game_type_count["남복"] or game_type_count["여복"] <= game_type_count["혼복"]:
-#                     court_players += [p for p in available_members_sorted[2:] if p['gender'] == '여'][:2]
-#                     game_type = "여복"
-#                 else:
-#                     court_players += [p for p in available_members_sorted[2:] if p['gender'] == '남'][:2]
-#                     game_type = "혼복"
-#             else:
-#                 court_players += [p for p in available_members_sorted[2:] if p['gender'] == '남'][:1]
-#                 court_players += [p for p in available_members_sorted[2:] if p['gender'] == '여'][:1]
-#                 game_type = "혼복"
-            
-#             if len(court_players) < PLAYERS_PER_COURT:
-#                 court_players = available_members_sorted[:PLAYERS_PER_COURT]
-#                 game_type = "기타"
-
-#             # 멤버들의 조합을 튜플로 만들어서 중복 체크
-#             court_combination = tuple(sorted([court_players[i]["name"] for i in range(len(court_players))]))
-
-#             # 중복 최소화를 위한 전략
-#             if all(mem_id not in used_combinations[court_players[i]["name"]] for i, mem_id in enumerate(court_combination)):
-#                 for player in court_players:
-#                     used_combinations[player["name"]].update(court_combination)
-
-#             # 대진표에 추가
-#             game_type_count[game_type] += 1
-#             court_schedule = [[court_players[i]["name"] for i in range(len(court_players))], game_type]
-#             schedule[str(timeslot)][court] = court_schedule
-
-#             # 참여 멤버 기록 업데이트
-#             for player in court_players:
-#                 games_per_member[player["name"]] += 1
-            
-#             for p in court_players:
-#                 available_members.remove(p)
-
-
-#     return schedule, games_per_member
-
 def create_tennis_schedule(attendee, NUM_TIMESLOTS=6, NUM_COURT=2, PLAYERS_PER_COURT=4):
     schedule = {str(i+1): [[], []] for i in range(NUM_TIMESLOTS)}
     games_per_member = defaultdict(lambda:defaultdict(lambda:0)) # {name: {total: 0, 남복: 0, 여복: 0, 혼복: 0, 기타: 0}}
@@ -157,7 +81,7 @@ def create_tennis_schedule(attendee, NUM_TIMESLOTS=6, NUM_COURT=2, PLAYERS_PER_C
 
                 # 기존에 사용된 파트너 조합이 아닌 것을 우선 선택
                 random.shuffle(possible_pairs)
-                possible_pairs = sorted(possible_pairs, key=lambda p: (games_per_member[p[0][0]["name"]]['total'], games_per_member[p[0][1]['name']]['total']))
+                possible_pairs = sorted(possible_pairs, key=lambda p: (games_per_member[p[0][0]["name"]]['total'], games_per_member[p[0][1]['name']]['total'], len(p[0][0]['available_times']), len(p[0][1]['available_times'])))
                 # possible_pairs = [p for p in possible_pairs if tuple([p[0][0]["name"], p[0][1]["name"]]) not in used_partner_combinations]
                 
                 comb = []

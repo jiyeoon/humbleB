@@ -89,7 +89,6 @@ if st.button("Generate Schedule"):
             result[f'코트{court_idx}'].append(players)
             result[f'코트{court_idx} 분류'].append(game_type)
     df = pd.DataFrame(result)
-    df.index = df.index + 1
     st.dataframe(df.style.apply(highlight_cells, axis=1), hide_index=True, use_container_width=True)
 
     st.write("##### Games per Member")
