@@ -73,15 +73,23 @@ def create_tennis_schedule(attendee, NUM_TIMESLOTS=6, NUM_COURT=2, PLAYERS_PER_C
 
                 # 남남, 여여, 남녀 조합을 가능한 모든 조합으로 생성
                 for pair in itertools.combinations(females, 2):
-                    possible_pairs.append((pair, "여여", 1))
+                    p1, p2 = pair[0], pair[1]
+                    ntrp_sum = p1['ntrp'] + p2['ntrp']
+                    possible_pairs.append((pair, "여여", ntrp_sum))
                 for pair in itertools.combinations(males, 2):
-                    possible_pairs.append((pair, "남남", 2))
+                    p1, p2 = pair[0], pair[1]
+                    ntrp_sum = p1['ntrp'] + p2['ntrp']
+                    possible_pairs.append((pair, "남남", ntrp_sum))
                 for male, female in itertools.product(males, females):
-                    possible_pairs.append(((male, female), "남녀", 3))
+                    p1, p2 = pair[0], pair[1]
+                    ntrp_sum = p1['ntrp'] + p2['ntrp']
+                    possible_pairs.append(((male, female), "남녀", ntrp_sum))
 
                 # 기존에 사용된 파트너 조합이 아닌 것을 우선 선택
                 random.shuffle(possible_pairs)
-                possible_pairs = sorted(possible_pairs, key=lambda p: (games_per_member[p[0][0]["name"]]['total'], games_per_member[p[0][1]['name']]['total'], len(p[0][0]['available_times']), len(p[0][1]['available_times'])))
+                # possible_pairs = sorted(possible_pairs, key=lambda p: (games_per_member[p[0][0]["name"]]['total'], games_per_member[p[0][1]['name']]['total'], len(p[0][0]['available_times']), len(p[0][1]['available_times'])))
+                possible_pairs = sorted(possible_pairs, key=lambda p: (games_per_member[p[0][0]["name"]]['total'], games_per_member[p[0][1]['name']]['total'], -p[2]))
+
                 # possible_pairs = [p for p in possible_pairs if tuple([p[0][0]["name"], p[0][1]["name"]]) not in used_partner_combinations]
                 
                 comb = []
@@ -140,6 +148,41 @@ def create_tennis_schedule(attendee, NUM_TIMESLOTS=6, NUM_COURT=2, PLAYERS_PER_C
             for player in selected_players:
                 games_per_member[player["name"]]['total'] += 1
                 games_per_member[player["name"]][game_type] += 1
+    
+    # ✅ 게임 수 불균형 조정 단계
+    min_games = min(games_per_member[m['name']]['total'] for m in members)
+    max_games = max(games_per_member[m['name']]['total'] for m in members)
+
+    ii = 0
+    while min_games < 4 and ii <= 100:
+        min_player = next(m for m in members if games_per_member[m['name']]['total'] == min_games)
+        max_player_candidates = [m for m in members if games_per_member[m['name']]['total'] == max_games and m['gender'] == min_player['gender']]
+
+        if not max_player_candidates:
+            break
+            
+        max_player = max_player_candidates[0]
+
+        swapped = False
+        for timeslot in range(min_player['start_time'], min_player['end_time'] + 1):
+            if min_player['name'] in [p for court in range(NUM_COURT) for p in schedule[str(timeslot)][court][0]]:
+                continue  # min_player가 이미 같은 timeslot에 배정되어 있으면 넘어감
+            
+            for court in range(NUM_COURT):
+                if min_player['name'] not in schedule[str(timeslot)][court][0] and max_player['name'] in schedule[str(timeslot)][court][0]:
+                    # 🔄 교체 실행
+                    schedule[str(timeslot)][court][0].remove(max_player['name'])
+                    schedule[str(timeslot)][court][0].append(min_player['name'])
+                    games_per_member[min_player["name"]]['total'] += 1
+                    games_per_member[max_player["name"]]['total'] -= 1
+                    swapped = True
+                    break
+            if swapped:
+                break
+        
+        min_games = min(games_per_member[m['name']]['total'] for m in members)
+        max_games = max(games_per_member[m['name']]['total'] for m in members)
+        ii += 1
 
     return schedule, games_per_member
 
