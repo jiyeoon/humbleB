@@ -11,26 +11,28 @@ set_page_config()
 set_sidebar()
 
 # --- UI
-st.write("### Notice")
+st.write("## 📌 Notice")
 
-st.page_link('pages/add_post.py', label='Add Post', icon=':material/add_comment:')
+_, col = st.columns([9, 1])
+with col: st.page_link('pages/add_post.py', label='Add Post', icon=':material/add_comment:')
 
 postDB = PostDB()
 posts = postDB.get_posts()
 
 if posts:
-    # df = pd.DataFrame(posts, columns=['post_id', 'title', 'author', 'content', 'date'])
-    # df['title'] = df.apply(lambda x: f'[{x["title"]}](view_post?post_id={x["post_id"]})', axis=1)
-    # df['author'] = df.apply(lambda x: f"`{x['author']}`", axis=1)
-    # df.drop(columns=['content', 'post_id'], inplace=True)
-    # df.sort_values(by='date', ascending=False, inplace=True)
-    # st.table(df)
+    st.info(f"총 {len(posts)}개의 게시글이 있습니다.")
+    df = pd.DataFrame(posts, columns=['post_id', 'title', 'author', 'content', 'date'])
+    df['title'] = df.apply(lambda x: f'[{x["title"]}](view_post?post_id={x["post_id"]})', axis=1)
+    df['author'] = df.apply(lambda x: f"`{x['author']}`", axis=1)
+    df['tag'] = df.apply(lambda x: f":red-badge[:material/star: Favorite]", axis=1)
+    df.drop(columns=['content', 'post_id'], inplace=True)
+    df.sort_values(by='date', ascending=False, inplace=True)
+    df.reset_index(drop=True, inplace=True)
+    df.index += 1
     
-
-    for post in posts:
-        post_id, title, author, _, date = post
-        # st.markdown(f'[{title}](view_post?post_id={post_id})', unsafe_allow_html=False)  
-        # st.markdown(f'<a href="view_post?post_id={post_id}" target="_self">{title}</a>', unsafe_allow_html=True)
-        st.page_link(f'view_post.py', label=title )
+    df_md = df.to_markdown(index=True)
+    st.write(df_md)
+    
 else:
     st.info("등록된 게시글이 없습니다.")
+
