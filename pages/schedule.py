@@ -61,9 +61,13 @@ attendee_edited = st.data_editor(st.session_state.attendee_df, hide_index=True, 
 
 
 if st.button("Generate Schedule"):
+    if attendee_edited.empty:
+        st.error("참가자를 선택해주세요!")
+        st.stop()
+    
     attendee = attendee_edited.values.tolist()
     schedule, games_per_member = create_tennis_schedule(attendee)
-    
+
     st.write("##### Schedule")
     result = {
         'set' : [],
@@ -86,8 +90,10 @@ if st.button("Generate Schedule"):
                 players = "{}, {} / {}, {}".format(court_players[0], court_players[1], court_players[2], court_players[3])
             else:
                 players = ", ".join(court_players)
+
             result[f'코트{court_idx}'].append(players)
             result[f'코트{court_idx} 분류'].append(game_type)
+
     df = pd.DataFrame(result)
     st.dataframe(df.style.apply(highlight_cells, axis=1), hide_index=True, use_container_width=True)
 
@@ -100,5 +106,7 @@ if st.button("Generate Schedule"):
     cnt_df = pd.DataFrame(cnt_df, columns=['name', 'total', '남복', '여복', '혼복', '기타'])
     cnt_df.fillna(0, inplace=True)
     st.dataframe(cnt_df, hide_index=True)
+
+    st.toast("대진이 생성되었습니다")
     # st.dataframe(games_per_member)
 
